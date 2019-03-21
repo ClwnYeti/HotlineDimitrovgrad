@@ -1,7 +1,36 @@
 import pygame
 import sys
 import os
-
+from PyQt5 import uic
+from PyQt5.QtWidgets import QApplication, QInputDialog
+from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import Qt
+    
+        
+class Menu(QWidget):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('menu.ui', self)
+        self.initUI()
+    
+    def initUI(self):
+        self.b1.clicked.connect(self.start)
+        self.b2.clicked.connect(self.vibor)
+        self.b3.clicked.connect(self.exite)
+    
+    def vibor(self):
+        pass
+    
+    
+    def exite(self):
+        sys.exit(self.exec())
+    
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.close()
+            
+    def start(self):
+        pass
 
 
 
@@ -65,7 +94,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(
             tile_width * pos_x + 15, tile_height * pos_y + 5)
         self.beg = {"l": player_imagebl, "r": player_imagebr}
-        self.n = 0
+        self.n = 2
         self.potron = 20
         
     def update(self, dx, dy):
@@ -110,33 +139,20 @@ def generate_level(level):
                 new_player = Player(x, y)
     return new_player, x, y
 
-
-class Camera:
-    def __init__(self):
-        self.dx = 0
-        self.dy = 0
-
-    def apply(self, obj):
-        obj.rect.x += self.dx
-        obj.rect.y += self.dy
-
-    def update(self, target):
-        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
-        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
-
-
 def start_screen():
-    intro_text = ["ЗАСТАВКА", "",
-                  "Правила игры",
-                  "Если в правилах несколько строк,",
-                  "приходится выводить их построчно"]
+    intro_text = ["Здравствуйте", "",
+                  "Привила игры",
+                  "Передвижение: WASD или стрелочки",
+                  "Задача: Выбраться наружу"
+                  "Нажмите любую клавишу,"
+                  "чтобы зайти в меню"]
 
     fon = pygame.transform.scale(load_image('fon.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 30)
     text_coord = 50
     for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color('black'))
+        string_rendered = font.render(line, 1, pygame.Color('white'))
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
@@ -151,9 +167,22 @@ def start_screen():
             elif event.type == \
                     pygame.KEYDOWN or event.type == \
                     pygame.MOUSEBUTTONDOWN:
-                return  # начинаем игру
+                return
         pygame.display.flip()
         clock.tick(fps)
+
+class Camera:
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
 
 
 pygame.init()
@@ -199,8 +228,14 @@ while running:
         keystate = pygame.key.get_pressed()
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.K_UP:
-            player.image = player.stoy[player.nap]
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_ESCAPE:
+                app = QApplication(sys.argv)
+                ex = Menu()
+                ex.show()
+            else:
+                player.image = player.stoy[player.nap]
+                player.n = 2
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 moveg -= 1
@@ -252,14 +287,13 @@ while running:
                 pv = -1
             else:
                 pv = 1
-
             Puly(player.rect.x + 32, player.rect.y + 32,
                  event.pos[0] - player.rect.x - 32,  event.pos[1] - player.rect.y - 32, pg, pv)
     if movev != 0 or moveg != 0:
         player.update(moveg * v / fps, movev * v / fps)
     else:
         player.image = player.stoy[player.nap]
-        player.n = 0
+        player.n = 2
     for i in puly_group:
         i.update()
     screen.fill((0, 0, 0))
