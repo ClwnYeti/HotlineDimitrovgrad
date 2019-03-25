@@ -27,6 +27,8 @@ class Menu(QWidget):
     
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
+            global flag
+            flag = True
             self.close()
             
     def start(self):
@@ -52,6 +54,7 @@ def load_image(name, colorkey=None):
 class Puly(pygame.sprite.Sprite):
     def __init__(self,px, py, mx, my, pg, pv):
         super().__init__(puly_group, all_sprites)
+        self.type = 'puly'
         if mx != 0:
             k = my / mx
             self.vx = int(((300 ** 2) / (k ** 2 + 1)) ** 0.5)
@@ -69,9 +72,14 @@ class Puly(pygame.sprite.Sprite):
         self.rect.x += (self.pg * self.vx) /fps
         self.rect.y += (self.pv * self.vy) / fps
         test = pygame.sprite.spritecollide(self, tiles_group, False)
+        test2 = pygame.sprite.spritecollide(self, zombi_group, False)
         for i in test:
             if i.type == 'wall':
                 puly_group.remove(self)
+        for i in test2:
+            zombi_group.remove(i)
+            puly_group.remove(self)
+
             
             
 
@@ -88,6 +96,7 @@ class Tile(pygame.sprite.Sprite):
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         self.nap = "l"
+        self.type = 'pl'
         super().__init__(player_group, all_sprites)
         self.stoy = {"l": player_imagesl, "r": player_imagesr}
         self.image = self.stoy[self.nap]
@@ -99,17 +108,71 @@ class Player(pygame.sprite.Sprite):
         
     def update(self, dx, dy):
         self.rect.x += dx
-        self.rect.y += dy
-        self.image = self.beg[self.nap][int(self.n)]
-        self.n = (self.n + 0.2) % 6
         test = pygame.sprite.spritecollide(self, tiles_group, False)
         for i in test:
             if i.type == 'wall':
-                flag = False
                 self.rect.x -= dx
+                break
+        self.rect.y += dy
+        test = pygame.sprite.spritecollide(self, tiles_group, False)
+        for i in test:
+            if i.type == 'wall':
                 self.rect.y -= dy
                 break
+        self.image = self.beg[self.nap][int(self.n)]
+        self.n = (self.n + 0.2) % 6
 
+
+class Zombie(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y, pospx):
+        self.type = 'z'
+        if pos_x > pospx:
+            self.nap = "l"
+        else:
+            self.nap = "r"
+        self.n = 2
+        super().__init__(zombi_group, all_sprites)
+        self.beg = {"l": zombl, "r": zombr}
+        self.image = self.beg[self.nap][self.n]
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x + 15, tile_height * pos_y + 5)
+    
+    def update(self, plx, ply):
+        if self.rect.x > plx:
+            self.nap = "l"
+        else:
+            self.nap = "r"
+        if plx - self.rect.x != 0:
+            k = (ply - self.rect.y) / (plx - self.rect.x)
+            self.vx = int(((90 ** 2) / (k ** 2 + 1)) ** 0.5)
+            self.vy = int((90 ** 2 - self.vx ** 2) ** 0.5)
+        else:
+            self.vy = 90
+            self.vx = 0
+        if plx + 32 > self.rect.x:
+            pg = 1
+        else:
+            pg = -1
+        if ply + 32 > self.rect.y:
+            pv = 1
+        else:
+            pv = -1
+        self.pg = pg
+        self.pv = pv
+        self.rect.x += int(self.vx * self.pg / fps)
+        test = pygame.sprite.spritecollide(self, tiles_group, False)
+        for i in test:
+            if i.type == 'wall':
+                self.rect.x -= int(self.vx * self.pg / fps)
+                break
+        self.rect.y += int(self.vy * self.pv / fps)
+        test = pygame.sprite.spritecollide(self, tiles_group, False)
+        for i in test:
+            if i.type == 'wall':
+                self.rect.y -= int(self.vy * self.pv / fps)
+                break
+        self.image = self.beg[self.nap][int(self.n)]
+        self.n = (self.n + 0.2) % 6
 
 def terminate():
     pygame.quit()
@@ -137,6 +200,12 @@ def generate_level(level):
             elif level[y][x] == '@':
                 Tile('empty', x, y)
                 new_player = Player(x, y)
+                px = x
+    for y in range(len(level)):
+        for x in range(len(level[y])):
+            if level[y][x] == 'x':
+                Tile('empty', x, y)
+                Zombie(x, y, px)
     return new_player, x, y
 
 def start_screen():
@@ -193,6 +262,7 @@ all_sprites = pygame.sprite.Group()
 puly_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
+zombi_group = pygame.sprite.Group()
 size = 1000, 1000
 HEIGHT = 1000
 WIDTH = 1000
@@ -200,8 +270,8 @@ fps = 25
 screen = pygame.display.set_mode(size)
 puly = load_image("puly.png")
 tile_images = {
-    "empty": load_image("grass.png"),
-    "wall": load_image("box.png")
+    "empty": load_image("Wall.png"),
+    "wall": load_image("Pol.png")
 }
 player_imagebl = [load_image("begl1.png"),
                   load_image("begl2.png"),
@@ -215,14 +285,28 @@ player_imagebr = [load_image("begr1.png"),
                   load_image("begr4.png"),
                   load_image("begr3.png"),
                   load_image("begr2.png")]
+zombl = [load_image("zl1.png"),
+                  load_image("zl2.png"),
+                  load_image("zl3.png"),
+                  load_image("zl4.png"),
+                  load_image("zl3.png"),
+                  load_image("zl2.png")]
+zombr = [load_image("zr1.png"),
+                  load_image("zr2.png"),
+                  load_image("zr3.png"),
+                  load_image("zr4.png"),
+                  load_image("zr3.png"),
+                  load_image("zr2.png")]
 player_imagesl = load_image("stoyl.png")
 player_imagesr = load_image("stoyr.png")
-tile_width = tile_height = 50
+tile_width = tile_height = 65
+app = QApplication(sys.argv)
 player, player_x, player_y = generate_level(load_level('levelex.txt'))
 start_screen()
 running = True
 moveg = 0
 movev = 0
+flag = True
 while running:
     for event in pygame.event.get():
         keystate = pygame.key.get_pressed()
@@ -230,13 +314,13 @@ while running:
             running = False
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_ESCAPE:
-                app = QApplication(sys.argv)
                 ex = Menu()
+                flag = False
                 ex.show()
-            else:
+            elif flag:
                 player.image = player.stoy[player.nap]
                 player.n = 2
-        if event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN and flag:
             if event.key == pygame.K_LEFT:
                 moveg -= 1
                 player.nap = "l"
@@ -257,7 +341,7 @@ while running:
                 movev += 1
             if event.key == pygame.K_s:
                 movev += 1
-        if event.type == pygame.KEYUP:
+        if event.type == pygame.KEYUP and flag:
             if event.key == pygame.K_LEFT:
                 moveg += 1
                 player.nap = "l"
@@ -278,7 +362,7 @@ while running:
                 movev -= 1
             if event.key == pygame.K_s:
                 movev -= 1
-        if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+        if event.type == pygame.MOUSEBUTTONUP and event.button == 1 and flag:
             if player.rect.x + 32 > event.pos[0]:
                 pg = -1
             else:
@@ -289,16 +373,20 @@ while running:
                 pv = 1
             Puly(player.rect.x + 32, player.rect.y + 32,
                  event.pos[0] - player.rect.x - 32,  event.pos[1] - player.rect.y - 32, pg, pv)
-    if movev != 0 or moveg != 0:
+    if movev != 0 or moveg != 0 and flag:
         player.update(moveg * v / fps, movev * v / fps)
     else:
         player.image = player.stoy[player.nap]
         player.n = 2
-    for i in puly_group:
-        i.update()
-    screen.fill((0, 0, 0))
-    tiles_group.draw(screen)
-    player_group.draw(screen)
-    puly_group.draw(screen)
-    pygame.display.flip()
-    clock.tick(fps)
+    if flag:
+        for i in puly_group:
+            i.update()
+        for i in zombi_group:
+            i.update(player.rect.x, player.rect.y)
+        screen.fill((0, 0, 0))
+        tiles_group.draw(screen)
+        puly_group.draw(screen)
+        player_group.draw(screen)
+        zombi_group.draw(screen)
+        pygame.display.flip()
+        clock.tick(fps)
