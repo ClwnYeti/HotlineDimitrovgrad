@@ -306,6 +306,8 @@ start_screen()
 running = True
 moveg = 0
 movev = 0
+camera = Camera()
+
 flag = True
 while running:
     for event in pygame.event.get():
@@ -384,6 +386,9 @@ while running:
         for i in zombi_group:
             i.update(player.rect.x, player.rect.y)
         screen.fill((0, 0, 0))
+        camera.update(player)
+        for sprite in all_sprites:
+            camera.apply(sprite)
         tiles_group.draw(screen)
         puly_group.draw(screen)
         player_group.draw(screen)
