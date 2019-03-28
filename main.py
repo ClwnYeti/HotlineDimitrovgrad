@@ -115,10 +115,13 @@ class Player(pygame.sprite.Sprite):
                 break
         self.rect.y += dy
         test = pygame.sprite.spritecollide(self, tiles_group, False)
+        test2 = pygame.sprite.spritecollide(self, zombi_group, False)
         for i in test:
             if i.type == 'wall':
                 self.rect.y -= dy
                 break
+        for i in test2:
+            exit()
         self.image = self.beg[self.nap][int(self.n)]
         self.n = (self.n + 0.2) % 6
 
