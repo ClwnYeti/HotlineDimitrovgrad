@@ -5,10 +5,11 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QInputDialog
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt
-    
+plstart = []
         
 class Menu(QWidget):
     def __init__(self):
+        global plstart
         super().__init__()
         uic.loadUi('menu.ui', self)
         self.initUI()
@@ -19,8 +20,26 @@ class Menu(QWidget):
         self.b3.clicked.connect(self.exite)
     
     def vibor(self):
-        pass
-    
+        with open('data/levels.txt', 'r', encoding='utf-8') as f:
+            f = list(f.read())
+        i, okBtnPressed = QInputDialog.getText(
+            self, 'Уровень',
+            "Введите номер уровня"
+        )
+        if okBtnPressed:
+            if 0 > int(i) or int(i) > 2:
+                print('Нет такого уровня')
+                return
+            elif f[int(i) - 1] != 'p':
+                print('Пройдите предыдущие уровни')
+                return
+            player, player_x, player_y = generate_level(load_level(f'levelex{int(i)}.txt'))
+            plstart.append(player)
+            plstart.append(player_x)
+            plstart.append(player_y)
+            global flag
+            flag = True
+            self.close()
     
     def exite(self):
         sys.exit(self.exec())
@@ -34,6 +53,57 @@ class Menu(QWidget):
     def start(self):
         pass
 
+def win():
+    with open('data/levels.txt', 'r', encoding='utf-8') as f:
+        a = list(f.read())
+        a[1] = 'p'
+    with open('data/levels.txt', 'w', encoding='utf-8') as f:
+        f.write(''.join(a))
+    fon = pygame.transform.scale(load_image('win.png'), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 30)
+    text_coord = 50
+    flag = False
+    player_group.empty()
+    tiles_group.empty()
+    puly_group.empty()
+    zombi_group.empty()
+    ex = Menu()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == \
+                    pygame.KEYDOWN or event.type == \
+                    pygame.MOUSEBUTTONDOWN:
+                flag = False
+                exit()
+        pygame.display.flip()
+        clock.tick(fps)
+
+
+def death():
+    fon = pygame.transform.scale(load_image('death.png'), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 30)
+    text_coord = 50
+    flag = False
+    player_group.empty()
+    tiles_group.empty()
+    puly_group.empty()
+    zombi_group.empty()
+    ex = Menu()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == \
+                    pygame.KEYDOWN or event.type == \
+                    pygame.MOUSEBUTTONDOWN:
+                flag = False
+                exit()
+        pygame.display.flip()
+        clock.tick(fps)
 
 
 def load_image(name, colorkey=None):
@@ -104,7 +174,7 @@ class Player(pygame.sprite.Sprite):
             tile_width * pos_x + 15, tile_height * pos_y + 5)
         self.beg = {"l": player_imagebl, "r": player_imagebr}
         self.n = 2
-        self.potron = 20
+        self.potron = 10
         
     def update(self, dx, dy):
         self.rect.x += dx
@@ -120,8 +190,10 @@ class Player(pygame.sprite.Sprite):
             if i.type == 'wall':
                 self.rect.y -= dy
                 break
+            if i.type == 'exit':
+                win()
         for i in test2:
-            exit()
+            death()
         self.image = self.beg[self.nap][int(self.n)]
         self.n = (self.n + 0.2) % 6
 
@@ -147,10 +219,10 @@ class Zombie(pygame.sprite.Sprite):
             self.nap = "r"
         if plx - self.rect.x != 0:
             k = (ply - self.rect.y) / (plx - self.rect.x)
-            self.vx = int(((90 ** 2) / (k ** 2 + 1)) ** 0.5)
-            self.vy = int((90 ** 2 - self.vx ** 2) ** 0.5)
+            self.vx = int(((100 ** 2) / (k ** 2 + 1)) ** 0.5)
+            self.vy = int((100 ** 2 - self.vx ** 2) ** 0.5)
         else:
-            self.vy = 90
+            self.vy = 100
             self.vx = 0
         if plx + 32 > self.rect.x:
             pg = 1
@@ -164,14 +236,24 @@ class Zombie(pygame.sprite.Sprite):
         self.pv = pv
         self.rect.x += int(self.vx * self.pg / fps)
         test = pygame.sprite.spritecollide(self, tiles_group, False)
+        test2 = pygame.sprite.spritecollide(self, zombi_group, False)
         for i in test:
             if i.type == 'wall':
                 self.rect.x -= int(self.vx * self.pg / fps)
                 break
+        for i in test2:
+            if i != self:
+                self.rect.x -= int(self.vx * self.pg / fps)
+                break
         self.rect.y += int(self.vy * self.pv / fps)
         test = pygame.sprite.spritecollide(self, tiles_group, False)
+        test2 = pygame.sprite.spritecollide(self, zombi_group, False)
         for i in test:
             if i.type == 'wall':
+                self.rect.y -= int(self.vy * self.pv / fps)
+                break
+        for i in test2:
+            if i != self:
                 self.rect.y -= int(self.vy * self.pv / fps)
                 break
         self.image = self.beg[self.nap][int(self.n)]
@@ -186,9 +268,7 @@ def load_level(filename):
     filename = "data/" + filename
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
-
     max_width = max(map(len, level_map))
-
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
@@ -204,6 +284,9 @@ def generate_level(level):
                 Tile('empty', x, y)
                 new_player = Player(x, y)
                 px = x
+            elif level[y][x] == 'e':
+                Tile('exit', x, y)
+    
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == 'x':
@@ -212,6 +295,7 @@ def generate_level(level):
     return new_player, x, y
 
 def start_screen():
+    global flag
     intro_text = ["Здравствуйте", "",
                   "Привила игры",
                   "Передвижение: WASD или стрелочки",
@@ -231,7 +315,8 @@ def start_screen():
         intro_rect.x = 10
         text_coord += intro_rect.height
         screen.blit(string_rendered, intro_rect)
-
+    flag = False
+    ex = Menu()
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -239,9 +324,14 @@ def start_screen():
             elif event.type == \
                     pygame.KEYDOWN or event.type == \
                     pygame.MOUSEBUTTONDOWN:
+                flag = False
+                
+                ex.show()
+            if flag:
                 return
         pygame.display.flip()
         clock.tick(fps)
+
 
 class Camera:
     def __init__(self):
@@ -273,8 +363,9 @@ fps = 25
 screen = pygame.display.set_mode(size)
 puly = load_image("puly.png")
 tile_images = {
-    "empty": load_image("Wall.png"),
-    "wall": load_image("Pol.png")
+    "empty": load_image("wall.png"),
+    "wall": load_image("floor.png"),
+    "exit": load_image("exit.png")
 }
 player_imagebl = [load_image("begl1.png"),
                   load_image("begl2.png"),
@@ -304,14 +395,12 @@ player_imagesl = load_image("stoyl.png")
 player_imagesr = load_image("stoyr.png")
 tile_width = tile_height = 65
 app = QApplication(sys.argv)
-player, player_x, player_y = generate_level(load_level('levelex.txt'))
 start_screen()
+player, player_x, player_y = plstart
 running = True
 moveg = 0
 movev = 0
 camera = Camera()
-
-flag = True
 while running:
     for event in pygame.event.get():
         keystate = pygame.key.get_pressed()
@@ -376,11 +465,13 @@ while running:
                 pv = -1
             else:
                 pv = 1
-            Puly(player.rect.x + 32, player.rect.y + 32,
-                 event.pos[0] - player.rect.x - 32,  event.pos[1] - player.rect.y - 32, pg, pv)
+            if player.potron != 0:
+                Puly(player.rect.x + 32, player.rect.y + 32,
+                    event.pos[0] - player.rect.x - 32,  event.pos[1] - player.rect.y - 32, pg, pv)
+                player.potron -= 1
     if movev != 0 or moveg != 0 and flag:
         player.update(moveg * v / fps, movev * v / fps)
-    else:
+    elif flag:
         player.image = player.stoy[player.nap]
         player.n = 2
     if flag:
@@ -396,5 +487,13 @@ while running:
         puly_group.draw(screen)
         player_group.draw(screen)
         zombi_group.draw(screen)
+        font = pygame.font.Font(None, 50)
+        text = font.render(str(player.potron), 1, (100, 255, 100))
+        text_x = 0
+        text_y = 0
+        text_w = text.get_width()
+        text_h = text.get_height()
+        screen.blit(text, (text_x, text_y))
+
         pygame.display.flip()
         clock.tick(fps)
