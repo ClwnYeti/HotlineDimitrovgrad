@@ -156,6 +156,7 @@ class Puly(pygame.sprite.Sprite):
             if i.type == 'wall':
                 puly_group.remove(self)
         for i in test2:
+            zd.play()
             zombi_group.remove(i)
             puly_group.remove(self)
 
@@ -411,6 +412,7 @@ movev = 0
 camera = Camera()
 gun = pygame.mixer.Sound('data/03236.mp3')
 xod = pygame.mixer.Sound('data/006.wav')
+zd = pygame.mixer.Sound('data/zd.wav')
 while running:
     for event in pygame.event.get():
         keystate = pygame.key.get_pressed()
