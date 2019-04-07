@@ -51,7 +51,16 @@ class Menu(QWidget):
             self.close()
             
     def start(self):
-        pass
+        global flag
+        flag = True
+        with open('data/levels.txt', 'w', encoding='utf-8') as f:
+            f.write('pc')
+        player, player_x, player_y = generate_level(load_level(f'levelex1.txt'))
+        plstart.append(player)
+        plstart.append(player_x)
+        plstart.append(player_y)
+        self.close()
+        
 
 def win():
     with open('data/levels.txt', 'r', encoding='utf-8') as f:
@@ -325,7 +334,6 @@ def start_screen():
                     pygame.KEYDOWN or event.type == \
                     pygame.MOUSEBUTTONDOWN:
                 flag = False
-                
                 ex.show()
             if flag:
                 return
@@ -401,6 +409,8 @@ running = True
 moveg = 0
 movev = 0
 camera = Camera()
+gun = pygame.mixer.Sound('data/03236.mp3')
+xod = pygame.mixer.Sound('data/006.wav')
 while running:
     for event in pygame.event.get():
         keystate = pygame.key.get_pressed()
@@ -466,10 +476,12 @@ while running:
             else:
                 pv = 1
             if player.potron != 0:
+                gun.play()
                 Puly(player.rect.x + 32, player.rect.y + 32,
                     event.pos[0] - player.rect.x - 32,  event.pos[1] - player.rect.y - 32, pg, pv)
                 player.potron -= 1
     if movev != 0 or moveg != 0 and flag:
+        xod.play()
         player.update(moveg * v / fps, movev * v / fps)
     elif flag:
         player.image = player.stoy[player.nap]
