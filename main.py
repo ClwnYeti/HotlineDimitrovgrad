@@ -7,7 +7,8 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt
 from random import randint
 plstart = []
-        
+
+
 class Menu(QWidget):
     def __init__(self):
         global plstart
@@ -61,7 +62,27 @@ class Menu(QWidget):
         plstart.append(player_x)
         plstart.append(player_y)
         self.close()
-        
+
+
+class Pause(QWidget):
+    def __init__(self):
+        global plstart
+        super().__init__()
+        uic.loadUi('pause.ui', self)
+        self.initUI()
+    
+    def initUI(self):
+        self.bt.clicked.connect(self.exite)
+    
+    def exite(self):
+        sys.exit(self.exec())
+    
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            global flag
+            flag = True
+            self.close()
+    
 
 def win():
     with open('data/levels.txt', 'r', encoding='utf-8') as f:
@@ -179,10 +200,6 @@ class Potron(pygame.sprite.Sprite):
             player.potron += 2
 
 
-            
-            
-
-
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(tiles_group, all_sprites)
@@ -288,6 +305,7 @@ class Zombie(pygame.sprite.Sprite):
         self.image = self.beg[self.nap][int(self.n)]
         self.n = (self.n + 0.2) % 6
 
+
 def terminate():
     pygame.quit()
     sys.exit()
@@ -322,6 +340,7 @@ def generate_level(level):
                 Tile('empty', x, y)
                 Zombie(x, y, px)
     return new_player, x, y
+
 
 def start_screen():
     global flag
@@ -444,7 +463,7 @@ while running:
             running = False
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_ESCAPE:
-                ex = Menu()
+                ex = Pause()
                 flag = False
                 ex.show()
             elif flag:
