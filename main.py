@@ -153,7 +153,7 @@ def load_image(name, colorkey=None):
 
 
 class Puly(pygame.sprite.Sprite):
-    def __init__(self,px, py, mx, my, pg, pv):
+    def __init__(self, px, py, mx, my, pg, pv):
         super().__init__(puly_group, all_sprites)
         self.type = 'puly'
         if mx != 0:
@@ -170,7 +170,7 @@ class Puly(pygame.sprite.Sprite):
             px, py)
         
     def update(self):
-        self.rect.x += (self.pg * self.vx) /fps
+        self.rect.x += (self.pg * self.vx) / fps
         self.rect.y += (self.pv * self.vy) / fps
         test = pygame.sprite.spritecollide(self, tiles_group, False)
         test2 = pygame.sprite.spritecollide(self, zombi_group, False)
@@ -429,17 +429,17 @@ player_imagebr = [load_image("begr1.png"),
                   load_image("begr3.png"),
                   load_image("begr2.png")]
 zombl = [load_image("zl1.png"),
-                  load_image("zl2.png"),
-                  load_image("zl3.png"),
-                  load_image("zl4.png"),
-                  load_image("zl3.png"),
-                  load_image("zl2.png")]
+         load_image("zl2.png"),
+         load_image("zl3.png"),
+         load_image("zl4.png"),
+         load_image("zl3.png"),
+         load_image("zl2.png")]
 zombr = [load_image("zr1.png"),
-                  load_image("zr2.png"),
-                  load_image("zr3.png"),
-                  load_image("zr4.png"),
-                  load_image("zr3.png"),
-                  load_image("zr2.png")]
+         load_image("zr2.png"),
+         load_image("zr3.png"),
+         load_image("zr4.png"),
+         load_image("zr3.png"),
+         load_image("zr2.png")]
 player_imagesl = load_image("stoyl.png")
 player_imagesr = load_image("stoyr.png")
 tile_width = tile_height = 65
@@ -523,8 +523,8 @@ while running:
             if player.potron != 0:
                 gun.stop()
                 gun.play()
-                Puly(player.rect.x + 32, player.rect.y + 32,
-                    event.pos[0] - player.rect.x - 32,  event.pos[1] - player.rect.y - 32, pg, pv)
+                Puly(player.rect.x + 32, player.rect.y + 32, event.pos[0] - player.rect.x - 32,
+                     event.pos[1] - player.rect.y - 32, pg, pv)
                 player.potron -= 1
                 
     if movev != 0 or moveg != 0 and flag:
