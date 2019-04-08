@@ -5,6 +5,7 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QInputDialog
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt
+from random import randint
 plstart = []
         
 class Menu(QWidget):
@@ -156,10 +157,27 @@ class Puly(pygame.sprite.Sprite):
             if i.type == 'wall':
                 puly_group.remove(self)
         for i in test2:
+            a = randint(0, 5)
+            if a == 0:
+                Potron(self.rect.x, self.rect.y)
             zd.stop()
             zd.play()
             zombi_group.remove(i)
             puly_group.remove(self)
+
+
+class Potron(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__(potron_group, all_sprites)
+        self.image = potron
+        self.rect = self.image.get_rect().move(
+            x, y)
+    
+    def update(self):
+        if pygame.sprite.spritecollideany(self, player_group, False):
+            potron_group.remove(self)
+            player.potron += 2
+
 
             
             
@@ -366,12 +384,14 @@ puly_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 zombi_group = pygame.sprite.Group()
+potron_group = pygame.sprite.Group()
 size = 1000, 1000
 HEIGHT = 1000
 WIDTH = 1000
 fps = 25
 screen = pygame.display.set_mode(size)
 puly = load_image("puly.png")
+potron = load_image('potron.png')
 tile_images = {
     "empty": load_image("wall.png"),
     "wall": load_image("floor.png"),
@@ -412,7 +432,7 @@ moveg = 0
 movev = 0
 camera = Camera()
 gun = pygame.mixer.Sound('data/shoot.wav')
-gun.set_volume(0.5 * gun.get_volume())
+gun.set_volume(0.2 * gun.get_volume())
 xod = pygame.mixer.Sound('data/007.wav')
 xod.set_volume(0.5 * xod.get_volume())
 zd = pygame.mixer.Sound('data/zombiedeath.wav')
@@ -504,8 +524,10 @@ while running:
         camera.update(player)
         for sprite in all_sprites:
             camera.apply(sprite)
+        potron_group.update()
         tiles_group.draw(screen)
         puly_group.draw(screen)
+        potron_group.draw(screen)
         player_group.draw(screen)
         zombi_group.draw(screen)
         font = pygame.font.Font(None, 50)
