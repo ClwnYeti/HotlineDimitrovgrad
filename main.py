@@ -156,6 +156,7 @@ class Puly(pygame.sprite.Sprite):
             if i.type == 'wall':
                 puly_group.remove(self)
         for i in test2:
+            zd.stop()
             zd.play()
             zombi_group.remove(i)
             puly_group.remove(self)
@@ -410,9 +411,12 @@ running = True
 moveg = 0
 movev = 0
 camera = Camera()
-gun = pygame.mixer.Sound('data/03236.mp3')
-xod = pygame.mixer.Sound('data/006.wav')
-zd = pygame.mixer.Sound('data/zd.wav')
+gun = pygame.mixer.Sound('data/shoot.wav')
+gun.set_volume(0.5 * gun.get_volume())
+xod = pygame.mixer.Sound('data/007.wav')
+xod.set_volume(0.5 * xod.get_volume())
+zd = pygame.mixer.Sound('data/zombiedeath.wav')
+zd.set_volume(0.5 * zd.get_volume())
 while running:
     for event in pygame.event.get():
         keystate = pygame.key.get_pressed()
@@ -478,11 +482,14 @@ while running:
             else:
                 pv = 1
             if player.potron != 0:
+                gun.stop()
                 gun.play()
                 Puly(player.rect.x + 32, player.rect.y + 32,
                     event.pos[0] - player.rect.x - 32,  event.pos[1] - player.rect.y - 32, pg, pv)
                 player.potron -= 1
+                
     if movev != 0 or moveg != 0 and flag:
+        xod.stop()
         xod.play()
         player.update(moveg * v / fps, movev * v / fps)
     elif flag:
@@ -508,6 +515,5 @@ while running:
         text_w = text.get_width()
         text_h = text.get_height()
         screen.blit(text, (text_x, text_y))
-
         pygame.display.flip()
         clock.tick(fps)
